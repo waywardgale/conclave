@@ -1,0 +1,3 @@
+# Durable success before reward delivery
+
+Commit encounter success and every completion-reward allocation together in Conclave storage before announcing victory or paying rewards, freezing gameplay time and qualification before the bounded storage wait. This prevents partial recorded wins without making storage latency part of encounter time or retaining the arena indefinitely when a write is uncertain. Minecraft inventory and XP saves remain a separate boundary, so reconcile uncertain transfers through retained evidence and operator review rather than claiming a shared transaction or replaying gameplay.

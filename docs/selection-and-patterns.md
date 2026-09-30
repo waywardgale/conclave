@@ -1,0 +1,35 @@
+# Selection and pattern information
+
+Status: Q60-Q62 are accepted. They refine the accepted typed conditions, participant roles, and `match_pattern` mechanic without introducing scripts or command execution. [Q88](conditions-and-composition.md#q88-readable-condition-trees) now defines logical operators, collection checks, and count comparisons. The complete selector and predicate field catalog remains open.
+
+## Q60: selecting players
+
+Accepted: use typed player selections with filters for area, role, aura, and participant state. Gameplay selections use living, online participants with active admission in the current attempt by default. Authors can explicitly select the full roster or other states when a behavior needs them. Identity and eligibility remain separate: a disconnected player is still a participant even when absent from the default gameplay selection.
+
+Each action resolves its selected recipients once before applying that action. Applying an aura to the selected players must not change who receives that same application halfway through it. A later action or condition can evaluate the updated state. Capture occupancy remains a live check at each simulation update, while a mechanic with explicitly bound targets, such as `defeat`, keeps its accepted target-tracking semantics.
+
+Random selection is an explicit operation. Choose once for that operation, without choosing the same player twice, and retain the result for an assignment or mechanic until explicitly replaced. Merely checking a condition must not reroll an existing assignment. [Q169](roles-and-player-state.md#q169-declared-roles-and-explicit-assignment) accepts the concrete role-assignment actions, exact random-count selection, and shortage behavior. [Q170](roles-and-player-state.md#q170-explicit-online-and-life-state-filters) accepts explicit online/life-state filters. [Q238](reconnect-admission-and-assets.md#q238-participation-independent-of-online-and-life-state) adds independent participation filters; full-roster queries explicitly use `participation: any`.
+
+This selection contract covers players. Named NPC spawn groups and binding to a specific group activation are accepted in [Q64](npcs-and-spawning.md#q64-named-spawn-groups-and-defeat-completion). [Q81](manifest-references.md#q81-references-to-active-gameplay-state) defines phase-local and explicitly encounter-scoped runtime references and excludes references into another attempt's private owned state. Display audiences and privileged recovery actions must state their recipients explicitly and respect their existing visibility or authorization rules. Q103 makes clear that scoped state references and mechanic selectors do not block ordinary world combat, movement, or interaction across rosters. [Q109](encounter-activation.md#q109-selecting-and-tracking-participants) accepts pre-start world-player selection and a default participant set of all online raiders, excluding GMs, without an implicit area restriction. This differs from the Q60 default for gameplay selections inside an active attempt. Q112-Q114 accept explicit collection fields and filter details.
+
+## Q61: empty selections and condition groups
+
+Accepted: both `any` and `all` return false when their selected collection is empty. For a nonempty collection, retain the accepted meanings: `any` requires at least one matching member, and `all` requires every member to match. This is a deliberate authoring rule for Conclave's collection checks, rather than mathematical vacuous truth for `all`.
+
+For example, "all runners have the aura" is false if no runners are assigned. Use an explicit count-equals-zero check when the intended requirement is that nobody remains or no targets are present. `not any(...)` still follows ordinary negation and therefore can express absence. [Q88](conditions-and-composition.md#q88-readable-condition-trees) defines the accepted `count` predicate and comparisons such as `equals` and `at_least`.
+
+Empty `and` or `or` condition lists are validation errors. The existing requirement that a phase without objectives needs explicit completion remains unchanged. `defeat` completion follows recorded defeats of its designated targets; it does not infer success from an empty selection of currently living NPCs.
+
+## Q62: shared pattern progress and private clues
+
+Accepted: `match_pattern` has one shared pattern and shared input progress per mechanic activation by default. Any eligible input participant can contribute to that shared progress. Authors can instead request per-player progress for independent challenges; whether different players receive different expected patterns is an explicit author choice, not an effect of camera mode or role assignment.
+
+Pattern submission uses declared input interactions and token values, and the server validates the source, participant eligibility, and current activation. Wrong input resets the relevant progress, shared progress in shared mode or that player's progress in per-player mode, and emits the already accepted mismatch event. Concurrent submissions follow the event order accepted in [Q68](execution-and-errors.md#q68-event-processing-and-transition-boundaries).
+
+An expected pattern is not automatically displayed to the team. An author explicitly reveals the complete pattern or selected pieces to a selected audience, such as one role or particular players. A matching result, shared progress display, and the hidden expected answer are separate information. One reader seeing a clue does not automatically grant it to the players submitting the answer.
+
+The server retains the complete expected answer and sends only the authorized presentation to each recipient. Later spectating follows the accepted global private-information policy. A Creative area overlay grants no access to pattern answers. [Q197-Q198](pattern-presentation-and-clues.md) accept concrete token display and clue revelation. [Q199-Q200](pattern-state-and-progress-display.md) accept current progress queries and HUD output. [Q201-Q202](pattern-parameters.md) accept typed pattern parameters.
+
+[Q191-Q192](pattern-definitions-and-inputs.md) accept a declared token vocabulary, concrete fixed or randomized answer forms, and repeatable interaction bindings. [Q193-Q194](pattern-progress-and-submission.md) accept per-player completion, lifecycle retention, and rule-driven input. [Q195-Q196](pattern-feedback-and-controls.md) accept feedback events and explicit progress resets. [Q197-Q198](pattern-presentation-and-clues.md) accept presentation without changing input eligibility.
+
+[Q131](presentation-and-dialogue.md#q131-audience-and-sound-origin) accepts explicit presentation audiences, including global recipients, player filters, a radius around the speaker, and areas. Q134 accepts `radius` and a shared `audience` with whole-selector overrides nested under `text.audience` and `sound.audience`. These presentation queries do not replace the default living-participant collection used by ordinary gameplay actions.

@@ -1,0 +1,3 @@
+# Prepare durable storage upgrades before replacing code
+
+A new release may be unable to open old ownership and accounting safely, so Conclave records operator approval of a concrete declarative upgrade plan under the working release and binds it to a verified closed source backup. Trusted converters in the installed target release then validate the plan and stage conversion before world admission, accepting a preparation step in exchange for preserving an identifiable source and recoverable transition. After post-migration state changes, including startup recovery, returning to an older format requires a complete compatible snapshot restore under [Q277](../durable-storage-upgrades.md).
