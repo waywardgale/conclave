@@ -1,0 +1,3 @@
+# Raised the native health ceiling
+
+Conclave supports authored NPC health up to 1,000,000 points by raising the shared native maximum-health ceiling on both server and client, retaining Minecraft's health, combat, and persistence paths instead of maintaining a second health pool. Vanilla defaults remain unchanged, but other entities and mods can use the expanded range and previously capped modifiers can take effect. This startup integration keeps health balancing in revisioned manifests and avoids a separate combat and synchronization implementation; compatibility and live behavior still require implementation verification.

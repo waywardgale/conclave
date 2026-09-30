@@ -1,0 +1,3 @@
+# Back up native and Conclave state together after world closure
+
+Minecraft player/world saves and Conclave accounting do not share a transaction, so independent live copies cannot establish a matching recovery point. Conclave therefore uses an operator-requested stopped-world backup and complete-set restore with exclusive access, accepting downtime and normal host restart to preserve native player state, ownership, rewards and retained item resources together. Current administrative authority stays outside gameplay rollback; [Q276](../coordinated-backup-and-restore.md) defines the accepted workflow and its limits.

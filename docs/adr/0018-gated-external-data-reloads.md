@@ -1,0 +1,3 @@
+# Gated external data reloads
+
+Minecraft datapack reloads can mutate damage tags and other resources used by active encounters, so retaining a Conclave revision alone cannot preserve their behavior. Conclave rejects a conflicting global reload before application while attempts or retained consumers require the current data, leaving them running; ordinary Conclave publication still stages changes for future attempts. The version-specific gate must be verified before shipping, including candidate disposal and failure reporting, because Fabric's existing reload notifications do not provide that guarantee.

@@ -1,0 +1,3 @@
+# Restrict terminal rules to final presentation
+
+Allowing gameplay actions after an encounter result commits would make required failures ambiguous and let authored callbacks obstruct cleanup. Conclave gives encounter, phase, and layers self-terminal rules one bounded opportunity for immediate best-effort presentation, while gameplay work must finish in an eligible live scope before its result commits. This sacrifices general completion callbacks to keep results stable and recovery independent of authored rules; [Q245](../ending-scope-presentation.md) defines the allowed actions and media lifetimes.

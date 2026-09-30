@@ -1,0 +1,3 @@
+# Retain item appearances independently of encounter history
+
+Real equipment can survive in offline inventories, unloaded containers, and copied stacks, so loaded-world scans cannot prove that an old appearance is unused. Conclave archives each supported appearance and its dependencies before real items can reference it, retaining that shared data independently of encounter history without automatic retirement in the initial implementation. This accepts conservative disk use, bounded by admission limits, to preserve ordinary item behavior without per-copy tracking or reclaiming players' possessions; the detailed contract is recorded in [Q232-Q233](../durable-item-appearances.md).
