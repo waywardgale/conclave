@@ -1,6 +1,6 @@
 # Mechanic startup and parameter contracts
 
-Status: Q167-Q168 are accepted. The user accepted `type: layers`, `export.events`, typed reusable-mechanic parameters, independent activations, and existing event ordering. These contracts specify startup and parameter validation; no runtime or schema implementation exists.
+Status: Q167-Q168 are accepted. The user accepted `type: layers`, `export.events`, typed reusable-mechanic parameters, independent activations, and existing event ordering. The development compiler and runtime implement startup ordering and a subset of the accepted parameter kinds. See [implementation status](implementation-status.md) for current evidence and remaining work.
 
 ## Q167: a started event before child mechanics begin
 

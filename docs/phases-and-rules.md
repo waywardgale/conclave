@@ -1,6 +1,6 @@
 # Phase and rule authoring
 
-Status: Q83-Q87 are accepted. Their syntax builds on the accepted single active phase, typed conditions, registered capabilities, reusable definitions, event queue, and simulation clock. Examples are fragments for reviewing the framework and are not shipped encounter content. No parser or runtime implements them yet.
+Status: Q83-Q87 are accepted. Their syntax builds on the accepted single active phase, typed conditions, registered capabilities, reusable definitions, event queue, and simulation clock. Examples are fragments for reviewing the framework and are not shipped encounter content. A development compiler and phase state machine implement a limited timed-phase subset; [implementation status](implementation-status.md) distinguishes that coverage from the full contract below.
 
 ## Multiple sequential phases
 

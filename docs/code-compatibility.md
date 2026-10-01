@@ -1,6 +1,6 @@
 # Client code and extension compatibility
 
-Status: Q268-Q269 are accepted. Q263 already selects typed startup registration, a fixed session catalog, trusted installed addons, and restart for code changes. These contracts settle the client connection requirement and the public extension compatibility promise. No handshake, published Kotlin API, or compatibility test suite exists.
+Status: Q268-Q269 are accepted. Q263 already selects typed startup registration, a fixed session catalog, trusted installed addons, and restart for code changes. A development core login exchange and codec tests now exist; live admission verification, addon capability negotiation, and the public Kotlin API remain pending. See [implementation status](implementation-status.md).
 
 ## Q268: require matching core code before world entry
 
@@ -54,7 +54,7 @@ An addon changing the meaning or accepted shape of a public configuration contra
 
 Verify supported compiled addon fixtures against subsequent compatible releases, exercise registration and lifecycle cancellation through the public interfaces, and run native/client integration checks for advertised adapters. Document actual tested ranges rather than treating version metadata as proof. Runtime contract errors continue to use Q69, and trusted JVM addons retain Q263's explicit lack of sandboxing or forced preemption.
 
-Exact Kotlin signatures, packaging, dependency coordinates, network payload versions, and configuration-contract metadata follow this policy and implementation evidence. The framework remains documentation-only. These contracts create no claim that published releases or an operational upgrade path already exist.
+Exact Kotlin signatures, packaging, dependency coordinates, network payload versions, and configuration-contract metadata follow this policy and implementation evidence. The initial development build does not establish a stable public API, a completed framework release, or an operational upgrade path.
 
 ## Related contracts
 

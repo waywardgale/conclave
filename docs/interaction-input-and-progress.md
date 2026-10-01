@@ -1,6 +1,6 @@
 # Interaction input and progress
 
-Status: Q175-Q177 are accepted. These contracts define completed uses, individual holds, physical eligibility, and coexistence with native interaction, building on Q174's block-position and NPC-group targets. The repository contains design documents, not a tested input adapter.
+Status: Q175-Q177 are accepted. These contracts define completed uses, individual holds, physical eligibility, and coexistence with native interaction, building on Q174's block-position and NPC-group targets. The development build implements and tests the block-target adapter. NPC targets remain pending; see [implementation status](implementation-status.md).
 
 ## Q175: completed uses and individual holds
 
@@ -83,3 +83,13 @@ One gesture can match several active interaction mechanics. Determine eligible r
 A valid Conclave `used` event reports the author's interaction gesture and progress, not success of the native interaction. Passing input onward does not prove that a door opened, an item was placed, or trading began. Observing those outcomes would need a separate supported event. Conversely, explicit consumption must not trigger the native behavior later as deferred work or repeat a held item effect through the other hand.
 
 The adapter must coordinate client prediction, server admission, both-hand paths, and native repeats. [Fabric 26.2 source research](interaction-input-research.md) confirms that existing callbacks expose attempted native use and do not supply a complete fresh-press/hold lifecycle. Earlier cancellation by another mod, unsupported interaction paths, and client/server disagreement need explicit compatibility handling; do not promise cancellation of arbitrary side effects already performed elsewhere. Unsupported required integration follows the existing validation/error policy rather than quietly crediting an interaction the server could not verify.
+
+## Current block adapter
+
+Arena location bindings select the containing block cell by flooring each coordinate. The server uses Minecraft's outline ray and native block reach, reduced by an authored `reach` when present. It checks that terrain along the ray is already entity-ticking. A different block identity at the cell invalidates held progress, including a break and rebuild between simulation ticks. Property changes on the same block, such as its powered state, preserve the generation.
+
+The client uses ordinary Use and shows prompts only for server-eligible recipients. A press binds an opaque offer to the current attempt, mechanic activations, target generation and connection. A custom press alone earns nothing: admission occurs in the actual Fabric server block-use callback. All matching Conclave mechanics observe the gesture before queued rules run. Both-hand repeats and held-item fallback share the consumption decision. Native callbacks canceled earlier by another mod cannot be observed by this adapter; side effects already performed by other mods cannot be undone.
+
+Continuation arrives every four client ticks. The server expires an unrefreshed gesture after one real-time second and releases unfinished holds before advancing the simulation. Release, input focus loss, physical ineligibility and replacement discard progress. A held key cannot acquire a replacement activation. The holder receives only their own server-reported progress; when several holds share a gesture, the bar shows the hold with the longest remaining duration. A completed or interrupted gesture asks for release before another use.
+
+Input limits are currently 16 messages per player and 1,024 total per server tick, with at most 128 recipients per gesture. Geometry checks bound work to 128 blocks and 64 horizontal chunks and never load terrain. These are development capacity limits; broader load and other-mod compatibility measurements remain release work. Native NPC-group input and the complete author-defined presentation vocabulary are still pending.

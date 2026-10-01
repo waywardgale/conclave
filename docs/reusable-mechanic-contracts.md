@@ -1,6 +1,6 @@
 # Reusable mechanic bodies and public events
 
-Status: Q165-Q166 are accepted with the user's naming changes: the mechanic type is `layers`, and the public interface block is `export`. Typed parameters, `type` versus `use`, independent occurrences, sequence/parallel/repeat composition, private internal names, scoped cleanup, and typed event rules are accepted. These contracts extend the authoring contract; no compiler or mechanic runtime exists.
+Status: Q165-Q166 are accepted with the user's naming changes: the mechanic type is `layers`, and the public interface block is `export`. Typed parameters, `type` versus `use`, independent occurrences, sequence/parallel/repeat composition, private internal names, scoped cleanup, and typed event rules are accepted. The development compiler and runtime implement these composition types and explicit event forwarding. See [implementation status](implementation-status.md) for supported value kinds, native adapters and remaining release work.
 
 ## Q165: a layers mechanic with local rules and state
 

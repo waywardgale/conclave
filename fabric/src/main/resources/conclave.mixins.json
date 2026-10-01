@@ -1,0 +1,28 @@
+{
+  "required": true,
+  "package": "dev.conclave.fabric.mixin",
+  "compatibilityLevel": "JAVA_25",
+  "mixins": [
+    "InteractionBlockMixin",
+    "CommandSourceAccess",
+    "RespawnDestinationMixin",
+    "RespawnConnectionAccess",
+    "PlayerListSaveAccess",
+    "PlayerRecoveryReceiptMixin",
+    "GraveInteractionAccess",
+    "GraveTextAccess",
+    "GraveDisplayAccess",
+    "GraveRespawnMixin",
+    "PlayerViewingMixin",
+    "SpectatorInputMixin",
+    "PlayerProtectionMixin",
+    "HostileMeleeMixin",
+    "KillProtectionMixin",
+    "HostileProjectileMixin",
+    "HostileTridentMixin",
+    "HostileThrowMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

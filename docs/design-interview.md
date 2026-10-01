@@ -1,6 +1,6 @@
 # Conclave design interview
 
-Status: the product decision frontier is empty following acceptance of Q277-Q279 on 2026-09-30. The consolidated design below awaits explicit shared-understanding confirmation before implementation. The repository still contains design documents and research only.
+Status: shared understanding confirmed by the user on 2026-09-30. The interview is closed, the product decision frontier is empty, and implementation is authorized in the accepted development stages.
 
 ## Confirmed brief
 
@@ -1364,7 +1364,7 @@ The default disclosure, other-viewer placement, initial effect profiles and atta
 
 ## Current decision frontier
 
-None. Q277-Q279 are accepted. The closure audit found no further required product decision in the agreed scope; shared-understanding confirmation below is still pending.
+None. Q277-Q279 are accepted and shared understanding is confirmed. The closure audit found no further required product decision in the agreed scope.
 
 ## Later decisions
 
@@ -1378,7 +1378,7 @@ Further item properties, richer text, new combat systems, extra NPC/provider cov
 
 ## Shared-understanding confirmation
 
-Pending: confirm that the consolidated design and its accepted contracts represent the intended Conclave framework, conclude the interview, and permit implementation in Q262's development stages. Acceptance of Q277-Q279 records those decisions; this final confirmation has not yet been supplied. No Kotlin code, executable schema or native adapter has been implemented during the interview.
+Confirmed by the user on 2026-09-30: "Shared understanding confirmed". The consolidated design and its accepted contracts are the implementation target. The interview is concluded and implementation may proceed through Q262's development stages. The interview produced design documents and research; implementation evidence is tracked separately.
 
 ## Hotfix feasibility notes
 

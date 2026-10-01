@@ -1,6 +1,6 @@
 # Simulation stages and outcome reactions
 
-Status: Q246-Q247 are accepted. They fill the ordering gaps left by Q68, Q244, and Q245. Existing simulation clocks, gameplay precedence, startup barriers, and next-tick progression remain accepted constraints. No runtime or native tick integration exists.
+Status: Q246-Q247 are accepted. They fill the ordering gaps left by Q68, Q244, and Q245. Existing simulation clocks, gameplay precedence, startup barriers, and next-tick progression remain accepted constraints. Initial queue and phase helpers exist, but this complete stage coordinator and native tick integration remain unimplemented. See [implementation status](implementation-status.md).
 
 ## Q246: ordinary work before timed work
 

@@ -1,6 +1,6 @@
 # Framework delivery and Kotlin extensions
 
-Status: Q262-Q263 are accepted. The repository contains design documents and research, with no Kotlin implementation, Fabric initialization, executable schema, or tests. The accepted decisions and the user's corrections form the design target, including how to complete and deliver that target and how extensions share the engine's behavior.
+Status: Q262-Q263 are accepted. Shared understanding was confirmed on 2026-09-30. Implementation has begun with a tested Kotlin foundation and Fabric bootstrap; [implementation status](implementation-status.md) records its limited coverage. The accepted decisions and the user's corrections remain the complete design target.
 
 ## Q262: keep the accepted target and build it in complete stages
 
@@ -38,7 +38,7 @@ The accepted Q277 storage-upgrade workflow builds on these accepted capabilities
 
 [Q266-Q267](area-fields-and-membership.md) accept the remaining concrete area fields and membership policy placement. [Q268-Q269](code-compatibility.md) accept core client admission and public extension stability. [Q270-Q271](settings-and-spectator-controls.md) accept settings/viewing details, and [Q272-Q273](content-upgrades-and-startup-recovery.md) accept content-upgrade and startup/recovery handling.
 
-[Q277](durable-storage-upgrades.md) accepts the storage-upgrade preparation and rollback contract. [Q278](revival-protection.md) accepts positive revival protection's damage/input rules, and [Q279](aura-and-world-visuals.md) accepts shared aura display and initial world-effect placement. These resolve the final required behavior branches identified by the closure audit. Complete field schemas and adapter proofs remain engineering work; [shared-understanding confirmation](design-interview.md#shared-understanding-confirmation) is pending before implementation.
+[Q277](durable-storage-upgrades.md) accepts the storage-upgrade preparation and rollback contract. [Q278](revival-protection.md) accepts positive revival protection's damage/input rules, and [Q279](aura-and-world-visuals.md) accepts shared aura display and initial world-effect placement. These resolve the final required behavior branches identified by the closure audit. Complete field schemas and adapter proofs remain engineering work; [shared understanding](design-interview.md#shared-understanding-confirmation) was confirmed on 2026-09-30 and implementation is authorized.
 
 Native hooks, exact dependency versions, parser/storage libraries, numeric budgets, and crash/performance verification require implementation evidence. Do not ask the user to guess these facts or invent arbitrary limits to declare the design complete. Where evidence creates an actual product tradeoff, bring that choice back with a recommendation.
 
@@ -96,4 +96,4 @@ Q262 selects the delivery target and scope discipline independently of a particu
 
 These contracts preserve the [framework brief and accepted decisions](design-interview.md), [Q70-Q72 manifests and publication](manifests-and-publishing.md), [Q73-Q77 in-game authoring](in-game-authoring.md), [Q78-Q82 typed references](manifest-references.md), [Q68-Q69 execution](execution-and-errors.md), [Q167-Q168 startup and typed parameters](mechanic-start-and-parameters.md), [Q214-Q215 native NPC targets and discovery](npc-adapter-scope.md), and [Q246-Q247 ordered outcomes](simulation-stages-and-outcomes.md).
 
-The selected ASVS references state design requirements, not an achieved conformance level. Neither module design nor a successful schema check proves native behavior, recovery, client compatibility, or measured limits. The product frontier is empty; final confirmation, executable schemas and implementation evidence remain distinct from accepted design decisions.
+The selected ASVS references state design requirements, not an achieved conformance level. Neither module design nor a successful schema check proves native behavior, recovery, client compatibility, or measured limits. The product frontier is empty and final confirmation is recorded; executable coverage and implementation evidence remain distinct from accepted design decisions.

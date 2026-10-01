@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "id": "conclave_test",
+  "version": "1.0.0",
+  "name": "Conclave native contract tests",
+  "environment": "*",
+  "entrypoints": {
+    "fabric-gametest": [
+      "dev.conclave.fabric.InteractionNativeTest",
+      "dev.conclave.fabric.NativeContractsTest",
+      "dev.conclave.fabric.EncounterNativeTest",
+      "dev.conclave.fabric.RevivalNativeTest",
+      "dev.conclave.fabric.RecoveryNativeTest",
+      "dev.conclave.fabric.GraveNativeTest",
+      "dev.conclave.fabric.ProtectionNativeTest"
+    ],
+    "fabric-client-gametest": [
+      "dev.conclave.fabric.InteractionClientTest",
+      "dev.conclave.fabric.EditorClientTest",
+      "dev.conclave.fabric.GraveClientTest",
+      "dev.conclave.fabric.SpectatorClientTest"
+    ]
+  }
+}

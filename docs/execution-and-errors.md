@@ -1,6 +1,6 @@
 # Execution and errors
 
-Status: Q68-Q69 are accepted. Single active phases, explicit progression, outcome precedence, simulation time, and owned cleanup are already accepted in [runtime semantics](runtime-semantics.md). No engine implementation exists.
+Status: Q68-Q69 are accepted. Single active phases, explicit progression, outcome precedence, simulation time, and owned cleanup are already accepted in [runtime semantics](runtime-semantics.md). The initial Kotlin work queue and phase state machine cover part of these contracts; [implementation status](implementation-status.md) records the missing rule engine, persistence, and native integration.
 
 ## Q68: event processing and transition boundaries
 
