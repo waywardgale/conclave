@@ -76,6 +76,57 @@ private class MechanicWorld : MechanicContext {
 
 class MechanicsTest {
     @Test
+    fun `pattern snapshots are immutable and terminal views retain counts without answers`() {
+        val world = MechanicWorld()
+        val pattern =
+            PatternMechanic(
+                PatternConfiguration(
+                    setOf("sun"),
+                    PatternAnswer.Fixed(listOf("sun", "sun")),
+                    perPlayer = true,
+                    completion = CompletionRequirement.Any,
+                ),
+                world,
+            )
+        assertNull(pattern.patternState())
+        pattern.start()
+        val empty = assertNotNull(pattern.patternState())
+        assertNull(empty.record())
+        pattern.input(MechanicInput.Token("sun", world.second, UUID.randomUUID()))
+        pattern.input(MechanicInput.Token("sun", world.first, UUID.randomUUID()))
+        val partial = assertNotNull(pattern.patternState())
+        pattern.input(MechanicInput.Token("sun", world.first, UUID.randomUUID()))
+        val terminal = assertNotNull(pattern.patternState())
+        assertEquals(0, empty.record(world.first)?.progress)
+        assertEquals(1, partial.record(world.first)?.progress)
+        assertEquals(PatternRecordState(2, 2, true), terminal.record(world.first))
+        assertEquals(PatternRecordState(1, 2, false), terminal.record(world.second))
+        assertEquals(1, terminal.completedPlayers)
+        assertNull(pattern.expected(world.first))
+        assertNull(pattern.expected(world.second))
+        world.frame = PlayerFrame(emptyList(), emptySet())
+        pattern.cancel()
+        assertSame(terminal, pattern.patternState())
+    }
+
+    @Test
+    fun `cancelled pattern discards its live progress view and private answer`() {
+        val world = MechanicWorld()
+        val pattern =
+            PatternMechanic(
+                PatternConfiguration(setOf("sun"), PatternAnswer.Fixed(listOf("sun", "sun"))),
+                world,
+            )
+        pattern.start()
+        pattern.input(MechanicInput.Token("sun", null, UUID.randomUUID()))
+        val before = assertNotNull(pattern.patternState())
+        pattern.cancel()
+        assertEquals(1, before.shared?.progress)
+        assertNull(pattern.patternState())
+        assertNull(pattern.expected())
+    }
+
+    @Test
     fun `pattern physical input uses server holds resets and a single cooldown across bindings`() {
         val world = MechanicWorld()
         val sun = TargetHandle(TargetReference(TargetKind.BLOCK, "sun_button"), UUID.randomUUID())
@@ -348,10 +399,11 @@ class MechanicsTest {
         assertEquals(0, pattern.progress())
         submit("moon")
         assertEquals(0, pattern.progress())
+        assertEquals(listOf("sun", "moon"), pattern.expected())
         submit("sun")
         submit("moon")
         assertEquals(MechanicState.SUCCEEDED, pattern.state)
-        assertEquals(listOf("sun", "moon"), pattern.expected())
+        assertNull(pattern.expected())
         assertNull(world.events.filterIsInstance<MechanicNotice.Result>().single().result.player)
     }
 

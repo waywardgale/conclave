@@ -159,10 +159,24 @@ interface MechanicInstance {
     /** Side-effect-free eligibility for one fresh native Use observation. */
     fun acceptsPress(value: MechanicInput.Press): Boolean = false
 
+    fun interactionPress(
+        player: UUID,
+        gesture: UUID,
+        targets: List<TargetHandle>,
+    ): MechanicInput.Press? =
+        targets
+            .asSequence()
+            .map { MechanicInput.Press(player, gesture, it) }
+            .firstOrNull(::acceptsPress)
+
     val interactionHold: SimulationDuration
         get() = SimulationDuration(0)
 
+    fun interactionHold(value: MechanicInput.Press): SimulationDuration = interactionHold
+
     fun interactionProgress(player: UUID, gesture: UUID): InteractionProgress? = null
+
+    fun patternState(): PatternObservation? = null
 
     fun start()
 
@@ -184,6 +198,8 @@ interface MechanicType<C : Any> {
 
     fun interactionTargets(configuration: C): List<TargetReference> = emptyList()
 
+    fun patternInterface(configuration: C): PatternInterface? = null
+
     fun composition(configuration: C): CompositionConfiguration? = null
 
     fun layers(configuration: C): LayersConfiguration? = null
@@ -194,6 +210,9 @@ interface MechanicType<C : Any> {
 }
 
 interface CompiledMechanic {
+    val patternInterface: PatternInterface?
+        get() = null
+
     val interactionTargets: List<TargetReference>
         get() = emptyList()
 
@@ -272,6 +291,7 @@ class MechanicRegistry private constructor(private val types: Map<DefinitionId, 
             override val spatialReferences = type.spatialReferences(configuration)
             override val interactionTargets =
                 java.util.List.copyOf(type.interactionTargets(configuration))
+            override val patternInterface = type.patternInterface(configuration)
 
             override fun create(context: MechanicContext) = type.create(configuration, context)
 

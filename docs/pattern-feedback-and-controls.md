@@ -1,6 +1,6 @@
 # Pattern feedback and progress controls
 
-Status: Q195-Q196 are accepted. They refine the accepted matcher, progress ownership, typed event, and action contracts. These decisions are independent: ordinary submission events do not require a reset action, and the reset action defines its own change notification. No implementation exists.
+Status: Q195-Q196 are accepted. Typed matcher events and `reset_pattern` rules are implemented in the development build, including personal/all-record resets and cancellation of unfinished holds. See [implementation status](implementation-status.md) for integration evidence and remaining presentation work.
 
 ## Q195: matcher events and private feedback
 

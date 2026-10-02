@@ -79,16 +79,33 @@ object PlayerPredicateSchema : ConfigSchema<PlayerPredicate> {
     private val number = ConfigSchemas.integer("Whole-number comparison").description
     private val recursive =
         SchemaDescription("", "A player predicate", reference = "#/$" + "defs/player_predicate")
-    private val body: SchemaDescription by lazy {
+    private val memberRecursive =
+        SchemaDescription("", "A member condition", reference = "#/\$defs/member_predicate")
+    private val body by lazy { body(recursive, false) }
+    private val memberBody by lazy { body(memberRecursive, true) }
+
+    private fun body(recursive: SchemaDescription, member: Boolean): SchemaDescription {
         val alternatives =
             listOf(
                 variantDescription(
                     "and",
-                    ConfigSchemas.list("All conditions", referenceSchema(), 1).description,
+                    SchemaDescription(
+                        "array",
+                        "All conditions",
+                        items = recursive,
+                        minItems = 1,
+                        maxItems = 256,
+                    ),
                 ),
                 variantDescription(
                     "or",
-                    ConfigSchemas.list("At least one condition", referenceSchema(), 1).description,
+                    SchemaDescription(
+                        "array",
+                        "At least one condition",
+                        items = recursive,
+                        minItems = 1,
+                        maxItems = 256,
+                    ),
                 ),
                 variantDescription("not", recursive),
                 variantDescription("in_area", local.description.copy(parameterType = "area")),
@@ -143,25 +160,37 @@ object PlayerPredicateSchema : ConfigSchema<PlayerPredicate> {
                     ),
                 ),
             )
-        SchemaDescription("", "A side-effect-free player condition", alternatives = alternatives)
+        return SchemaDescription(
+            "",
+            "A side-effect-free player condition",
+            alternatives =
+                alternatives +
+                    if (member)
+                        listOf(
+                            variantDescription("pattern_state", PatternStateQuerySchema.description)
+                        )
+                    else emptyList(),
+        )
     }
+
     override val description
         get() = recursive.copy(definitions = mapOf("player_predicate" to body))
 
-    private fun referenceSchema() =
-        object : ConfigSchema<PlayerPredicate> {
-            override val description = recursive
+    internal val memberDescription
+        get() = memberRecursive.copy(definitions = mapOf("member_predicate" to memberBody))
 
-            override fun decode(value: YamlValue, context: SchemaContext) =
-                PlayerPredicateSchema.decode(value, context)
-
-            override fun encode(value: PlayerPredicate) = PlayerPredicateSchema.encode(value)
-        }
+    internal fun decodeMember(value: YamlValue, context: SchemaContext) =
+        decode(value, context, 0, true)
 
     override fun decode(value: YamlValue, context: SchemaContext): PlayerPredicate =
         decode(value, context, 0)
 
-    private fun decode(value: YamlValue, context: SchemaContext, depth: Int): PlayerPredicate {
+    private fun decode(
+        value: YamlValue,
+        context: SchemaContext,
+        depth: Int,
+        member: Boolean = false,
+    ): PlayerPredicate {
         if (depth > 32)
             invalid("condition_depth", "Condition nesting exceeds 32 levels", value.source)
         val (kind, node) = singleField(value)
@@ -171,10 +200,19 @@ object PlayerPredicateSchema : ConfigSchema<PlayerPredicate> {
                 val items = node.sequence()
                 if (items.isEmpty() || items.size > 256)
                     invalid("condition_count", "Use between 1 and 256 conditions", node.source)
-                val children = items.map { decode(it, context, depth + 1) }
+                val children = items.map { decode(it, context, depth + 1, member) }
                 if (kind == "and") PlayerPredicate.And(children) else PlayerPredicate.Or(children)
             }
-            "not" -> PlayerPredicate.Not(decode(node, context, depth + 1))
+            "not" -> PlayerPredicate.Not(decode(node, context, depth + 1, member))
+            "pattern_state" -> {
+                if (!member || context.beforeAttempt)
+                    invalid(
+                        "pattern_state_context",
+                        "Pattern state is available in an attempt's any/all member conditions",
+                        node.source,
+                    )
+                PlayerPredicate.PatternState(PatternStateQuerySchema.decode(node, context))
+            }
             "in_area" -> PlayerPredicate.InArea(local.decode(node, context))
             "has_role" -> {
                 if (context.beforeAttempt)
@@ -259,6 +297,8 @@ object PlayerPredicateSchema : ConfigSchema<PlayerPredicate> {
             is PlayerPredicate.Not -> "{\"not\":" + encode(value.condition) + "}"
             is PlayerPredicate.Identity ->
                 error("Identity predicates are runtime-only; use a declared player source")
+            is PlayerPredicate.PatternState ->
+                "{\"pattern_state\":${PatternStateQuerySchema.encode(value.query)}}"
             is PlayerPredicate.InArea -> "{\"in_area\":" + local.encode(value.area) + "}"
             is PlayerPredicate.HasRole -> "{\"has_role\":" + local.encode(value.role) + "}"
             is PlayerPredicate.HasEffect ->

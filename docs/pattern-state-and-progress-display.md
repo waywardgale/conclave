@@ -1,6 +1,6 @@
 # Pattern state and progress display
 
-Status: Q199-Q200 are accepted. They build independently on accepted matcher records: server conditions and private HUD output can read those records without depending on one another's syntax. No implementation exists.
+Status: Q199-Q200 are accepted. The development build implements Q199 server conditions, including explicit event players, implicit `any`/`all` members, exact percentages and retained successful summaries. Q200 authored HUD output remains pending. See [implementation status](implementation-status.md).
 
 ## Q199: current pattern progress and personal completion
 

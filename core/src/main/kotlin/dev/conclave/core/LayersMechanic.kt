@@ -170,6 +170,45 @@ internal object ScopeDescriptions {
                         )
                     )
                 }
+                val player =
+                    record("Required typed player event field", mapOf("event" to id), "event")
+                add(
+                    record(
+                        "Submit a declared pattern token",
+                        mapOf(
+                            "submit_token" to
+                                record(
+                                    "Submit token",
+                                    mapOf(
+                                        "mechanic" to reference,
+                                        "token" to id,
+                                        "player" to player,
+                                    ),
+                                    "mechanic",
+                                    "token",
+                                )
+                        ),
+                        "submit_token",
+                    )
+                )
+                add(
+                    record(
+                        "Clear unfinished pattern progress",
+                        mapOf(
+                            "reset_pattern" to
+                                record(
+                                    "Reset progress",
+                                    mapOf(
+                                        "mechanic" to reference,
+                                        "player" to player,
+                                        "all" to flag,
+                                    ),
+                                    "mechanic",
+                                )
+                        ),
+                        "reset_pattern",
+                    )
+                )
             }
                 .toTypedArray(),
         )

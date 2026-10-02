@@ -1,6 +1,6 @@
 # Match pattern reference
 
-Status: this reference consolidates accepted Q33, Q62, and Q191-Q205. It adds no decisions. The linked contracts retain the detailed validation, lifecycle, and privacy rules. No matcher implementation exists.
+Status: this reference consolidates accepted Q33, Q62, and Q191-Q205. It adds no decisions. The development build implements matching, native block inputs, typed submission/reset actions, feedback events and server state queries. NPC/group targets and authored presentation remain pending; see [implementation status](implementation-status.md).
 
 ## Configure a matcher
 
@@ -63,4 +63,4 @@ World output uses ordinary occlusion and has no collision or interaction behavio
 
 ## Implementation boundaries
 
-The contracts require authoritative server state, typed validation, bounded work, captured content revisions, and private client delivery. Concrete engine limits, final HUD layout, client synchronization, and integration testing remain outstanding. These implementation tasks do not reopen the accepted matcher authoring vocabulary.
+The implemented matcher uses authoritative server state, scoped validation, bounded work and captured revisions. Native input tests exercise per-binding holds, mismatch resets, action-based submission, phase changes and pass-through interaction. The existing interaction HUD shows only the holder's use progress. Token presentation, clues, authored pattern-progress displays and NPC/group input still need their adapters and tests; final capacity limits need workload measurements.

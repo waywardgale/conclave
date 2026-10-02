@@ -226,6 +226,21 @@ internal class ScopeCompiler(
                     source,
                 )
         }
+        for (condition in conditions) for ((query, implicitPlayer) in condition.patternQueries()) {
+            if (!checkEncounter && query.mechanic.scope == StateScope.ENCOUNTER) continue
+            val owner = if (query.mechanic.scope == StateScope.ENCOUNTER) encounter else scope
+            val contract =
+                owner.allMechanics
+                    .singleOrNull { it.id == query.mechanic.id }
+                    ?.mechanic
+                    ?.patternInterface
+                    ?: invalid(
+                        "pattern_target",
+                        "Pattern state requires a directly accessible match_pattern occurrence",
+                        source,
+                    )
+            query.validate(contract, implicitPlayer, source)
+        }
         val checks =
             scope.objectives.filterIsInstance<ObjectiveDefinition.Check>().associateBy { it.id }
         val visiting = mutableSetOf<String>()

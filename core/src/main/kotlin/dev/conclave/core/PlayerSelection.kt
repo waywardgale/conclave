@@ -120,6 +120,8 @@ private fun matchesLife(filter: LifeFilter, state: LifeState) =
 sealed interface PlayerPredicate {
     fun test(player: PlayerObservation): Boolean
 
+    fun test(player: PlayerObservation, frame: ConditionFrame): Boolean = test(player)
+
     data object Always : PlayerPredicate {
         override fun test(player: PlayerObservation) = true
     }
@@ -128,16 +130,35 @@ sealed interface PlayerPredicate {
         val children = java.util.List.copyOf(children).also { require(it.isNotEmpty()) }
 
         override fun test(player: PlayerObservation) = children.all { it.test(player) }
+
+        override fun test(player: PlayerObservation, frame: ConditionFrame) = children.all {
+            it.test(player, frame)
+        }
     }
 
     class Or(children: List<PlayerPredicate>) : PlayerPredicate {
         val children = java.util.List.copyOf(children).also { require(it.isNotEmpty()) }
 
         override fun test(player: PlayerObservation) = children.any { it.test(player) }
+
+        override fun test(player: PlayerObservation, frame: ConditionFrame) = children.any {
+            it.test(player, frame)
+        }
     }
 
     data class Not(val condition: PlayerPredicate) : PlayerPredicate {
         override fun test(player: PlayerObservation) = !condition.test(player)
+
+        override fun test(player: PlayerObservation, frame: ConditionFrame) =
+            !condition.test(player, frame)
+    }
+
+    data class PatternState(val query: PatternStateQuery) : PlayerPredicate {
+        override fun test(player: PlayerObservation): Boolean =
+            error("Pattern state requires an enclosing condition frame")
+
+        override fun test(player: PlayerObservation, frame: ConditionFrame) =
+            query.test(frame, player.id)
     }
 
     data class Identity(val player: UUID) : PlayerPredicate {

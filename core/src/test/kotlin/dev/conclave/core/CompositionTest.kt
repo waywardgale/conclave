@@ -780,7 +780,7 @@ class CompositionTest {
                       - id: inner
                         type: layers
                         objectives:
-                          - {id: matcher, type: match_pattern, tokens: [sun], pattern: [sun]}
+                          - {id: matcher, type: match_pattern, tokens: [sun], pattern: [sun], inputs: [{token: sun, targets: [{block: console}]}]}
                         export:
                           events:
                             accepted:

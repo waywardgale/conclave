@@ -36,7 +36,14 @@ object BuiltinMechanics {
             override fun events(configuration: C) = contracts(configuration)
 
             override fun interactionTargets(configuration: C): List<TargetReference> =
-                (configuration as? InteractConfiguration)?.targets ?: emptyList()
+                when (configuration) {
+                    is InteractConfiguration -> configuration.targets
+                    is PatternConfiguration -> configuration.inputs.flatMap { it.targets }
+                    else -> emptyList()
+                }
+
+            override fun patternInterface(configuration: C) =
+                (configuration as? PatternConfiguration)?.let(::PatternInterface)
 
             override fun spatialReferences(configuration: C): SpatialReferences =
                 when (configuration) {

@@ -227,8 +227,11 @@ internal class NativeAttempts(private val session: ServerSession) : AutoCloseabl
             if (children != null) return children.firstNotNullOfOrNull { unsupported(it.mechanic) }
             return mechanic.takeUnless {
                 it.type == DefinitionId("conclave", "capture") ||
-                    it.type == DefinitionId("conclave", "interact") &&
-                        it.interactionTargets.all { target -> target.kind == TargetKind.BLOCK }
+                    it.type in
+                        setOf(
+                            DefinitionId("conclave", "interact"),
+                            DefinitionId("conclave", "match_pattern"),
+                        ) && it.interactionTargets.all { target -> target.kind == TargetKind.BLOCK }
             }
         }
         val unsupported =

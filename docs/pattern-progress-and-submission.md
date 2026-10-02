@@ -1,6 +1,6 @@
 # Pattern progress and rule-driven submission
 
-Status: Q193-Q194 are accepted. Q193 specifies the already accepted shared/per-player progress choice and its completion rules. Q194 adds an authored submission path to the accepted matcher. These decisions are independent of one another. No implementation exists.
+Status: Q193-Q194 are accepted. Shared and personal progress, captured solvers, completion requirements and typed `submit_token` rules are implemented in the development build. Supported event sources and player filters remain those listed in [implementation status](implementation-status.md).
 
 ## Q193: progress ownership, required players, and completion
 

@@ -343,6 +343,9 @@ class ReusableMechanicsTest {
             type: match_pattern
             tokens: [{parameter: first}, star]
             pattern: {sample: {length: {parameter: length}}}
+            inputs:
+              - {token: {parameter: first}, targets: [{block: first}]}
+              - {token: star, targets: [{block: other}]}
         """,
                 "leaves",
             )
@@ -391,7 +394,7 @@ class ReusableMechanicsTest {
         val tokens = (0..1023).joinToString(", ") { "token_$it" }
         val pattern =
             definition(
-                "parameters:\n  vocabulary: {type: pattern_tokens, default: [$tokens]}\ntype: match_pattern\ntokens: {parameter: vocabulary}\npattern: [token_0]",
+                "parameters:\n  vocabulary: {type: pattern_tokens, default: [$tokens]}\ntype: match_pattern\ntokens: {parameter: vocabulary}\npattern: [token_0]\ninputs: [{token: token_0, targets: [{block: console}]}]",
                 "large",
             )
         val occurrences = (0..149).joinToString("\n") { "- id: use_$it\n  use: tools:large" }

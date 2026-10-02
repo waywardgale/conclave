@@ -250,6 +250,13 @@ class AttemptEngine(
             val counters = state.counters().mapKeys { StateReference(it.key) }.toMutableMap()
             val timers = state.timers(tick).mapKeys { StateReference(it.key) }.toMutableMap()
             val encounter = checkNotNull(root)
+            val patterns = linkedMapOf<StateReference, PatternObservation>()
+            for ((id, mechanic) in this.mechanics) mechanic.instance.patternState()?.let {
+                patterns[StateReference(id)] = it
+            }
+            for ((id, mechanic) in encounter.mechanics) mechanic.instance.patternState()?.let {
+                patterns[StateReference(id, StateScope.ENCOUNTER)] = it
+            }
             mechanics +=
                 encounter.mechanics
                     .mapKeys { StateReference(it.key, StateScope.ENCOUNTER) }
@@ -292,6 +299,7 @@ class AttemptEngine(
                                             objectives,
                                             counters,
                                             timers,
+                                            patterns = patterns,
                                         )
                                     )
                                     .also { if (it && objective.latch) latched += id }
@@ -302,7 +310,14 @@ class AttemptEngine(
                 return satisfied
             }
             definitions.keys.forEach(::resolve)
-            return ConditionFrame(players, mechanics, objectives, counters, timers)
+            return ConditionFrame(
+                players,
+                mechanics,
+                objectives,
+                counters,
+                timers,
+                patterns = patterns,
+            )
         }
     }
 
@@ -656,18 +671,14 @@ class AttemptEngine(
         guarded {
             for (mechanic in scopes().flatMap { it.mechanics.values }) {
                 spend()
-                val input =
-                    targets
-                        .asSequence()
-                        .map { MechanicInput.Press(player, gesture, it) }
-                        .firstOrNull { mechanic.instance.acceptsPress(it) } ?: continue
+                val input = mechanic.instance.interactionPress(player, gesture, targets) ?: continue
                 check(result.size < 128) { "Interaction recipient limit exceeded" }
                 result +=
                     InteractionClaim(
                         mechanic.identity,
                         input,
                         mechanic.instance.consumes(input),
-                        mechanic.instance.interactionHold,
+                        mechanic.instance.interactionHold(input),
                     )
             }
         }
@@ -960,6 +971,29 @@ class AttemptEngine(
                             )
                         is RuleAction.Timer ->
                             owner.state.mutate(action.target.id, action.mutation, tick)
+                        is RuleAction.SubmitToken,
+                        is RuleAction.ResetPattern -> {
+                            val target =
+                                checkNotNull(owner.mechanics[action.target.id]) {
+                                    "Required matcher has not initialized"
+                                }
+                            val operation = UUID.randomUUID()
+                            val input =
+                                when (action) {
+                                    is RuleAction.SubmitToken ->
+                                        MechanicInput.Token(
+                                            action.token,
+                                            action.player?.resolve(payload),
+                                            operation,
+                                        )
+                                    is RuleAction.ResetPattern ->
+                                        MechanicInput.ResetPattern(
+                                            action.player?.let { setOf(it.resolve(payload)) },
+                                            operation,
+                                        )
+                                }
+                            target.instance.input(input)
+                        }
                     }
                 }
             }

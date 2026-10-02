@@ -1,6 +1,6 @@
 # Pattern definitions and interaction inputs
 
-Status: Q191-Q192 are accepted. These contracts define token vocabulary, expected-answer construction, and direct interaction bindings. Ordered/unordered matching, stable answers, shared progress by default, optional per-player progress, and private clues retain their accepted meanings. No implementation exists.
+Status: Q191-Q192 are accepted. The development build implements answer construction, matching, native block inputs and input-route validation. NPC/group input adapters and authored clue presentation remain pending. See [implementation status](implementation-status.md) for tested support.
 
 [Q193-Q194](pattern-progress-and-submission.md) accept concrete progress/completion fields and rule-driven submission. The [matcher reference](match-pattern.md) indexes the complete accepted contract.
 

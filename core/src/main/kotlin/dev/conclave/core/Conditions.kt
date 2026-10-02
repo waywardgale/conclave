@@ -28,15 +28,17 @@ class ConditionFrame(
     counters: Map<StateReference, Long> = emptyMap(),
     timers: Map<StateReference, TimerObservation> = emptyMap(),
     event: Map<String, EventDatum> = emptyMap(),
+    patterns: Map<StateReference, PatternObservation> = emptyMap(),
 ) {
     val mechanics: Map<StateReference, MechanicState> = java.util.Map.copyOf(mechanics)
     val objectives: Map<StateReference, Boolean> = java.util.Map.copyOf(objectives)
     val counters: Map<StateReference, Long> = java.util.Map.copyOf(counters)
     val timers: Map<StateReference, TimerObservation> = java.util.Map.copyOf(timers)
     val event: Map<String, EventDatum> = java.util.Map.copyOf(event)
+    val patterns: Map<StateReference, PatternObservation> = java.util.Map.copyOf(patterns)
 
     fun withEvent(payload: EventPayload) =
-        ConditionFrame(players, mechanics, objectives, counters, timers, payload.values)
+        ConditionFrame(players, mechanics, objectives, counters, timers, payload.values, patterns)
 }
 
 sealed interface Condition {
@@ -61,6 +63,10 @@ sealed interface Condition {
     data class Completed(val mechanic: StateReference) : Condition {
         override fun test(frame: ConditionFrame) =
             frame.mechanics[mechanic] == MechanicState.SUCCEEDED
+    }
+
+    data class PatternState(val query: PatternStateQuery) : Condition {
+        override fun test(frame: ConditionFrame) = query.test(frame)
     }
 
     data class Satisfied(val objective: StateReference) : Condition {
@@ -94,7 +100,9 @@ sealed interface Condition {
     ) : Condition {
         override fun test(frame: ConditionFrame): Boolean {
             val selected = players.select(frame.players)
-            return if (all) allSelected(selected, satisfy) else anySelected(selected, satisfy)
+            return selected.isNotEmpty() &&
+                if (all) selected.all { satisfy.test(it, frame) }
+                else selected.any { satisfy.test(it, frame) }
         }
     }
 
@@ -227,6 +235,7 @@ object ConditionSchema : ConfigSchema<Condition> {
                         "completed",
                         variantDescription("mechanic", StateReferenceSchema.description),
                     ),
+                    variantDescription("pattern_state", PatternStateQuerySchema.description),
                     variantDescription(
                         "satisfied",
                         variantDescription("objective", StateReferenceSchema.description),
@@ -277,7 +286,7 @@ object ConditionSchema : ConfigSchema<Condition> {
                             "At least one selected player",
                             mapOf(
                                 "players" to PlayerSelectionSchema.description,
-                                "satisfy" to PlayerPredicateSchema.description,
+                                "satisfy" to PlayerPredicateSchema.memberDescription,
                             ),
                         ),
                     ),
@@ -287,7 +296,7 @@ object ConditionSchema : ConfigSchema<Condition> {
                             "Every player in a nonempty selection",
                             mapOf(
                                 "players" to PlayerSelectionSchema.description,
-                                "satisfy" to PlayerPredicateSchema.description,
+                                "satisfy" to PlayerPredicateSchema.memberDescription,
                             ),
                         ),
                     ),
@@ -358,6 +367,7 @@ object ConditionSchema : ConfigSchema<Condition> {
                 if (kind == "and") Condition.And(children) else Condition.Or(children)
             }
             "not" -> Condition.Not(decode(node, context, depth + 1))
+            "pattern_state" -> Condition.PatternState(PatternStateQuerySchema.decode(node, context))
             "completed",
             "satisfied" -> {
                 val fields = Fields(node.mapping())
@@ -404,7 +414,8 @@ object ConditionSchema : ConfigSchema<Condition> {
             "all" -> {
                 val fields = Fields(node.mapping())
                 val players = PlayerSelectionSchema.decode(fields.required("players"), context)
-                val satisfy = PlayerPredicateSchema.decode(fields.required("satisfy"), context)
+                val satisfy =
+                    PlayerPredicateSchema.decodeMember(fields.required("satisfy"), context)
                 fields.finish()
                 Condition.Players(players, satisfy, kind == "all")
             }
@@ -524,6 +535,8 @@ object ConditionSchema : ConfigSchema<Condition> {
             is Condition.Not -> "{\"not\":${encode(value.child)}}"
             is Condition.Completed ->
                 "{\"completed\":{\"mechanic\":${StateReferenceSchema.encode(value.mechanic)}}}"
+            is Condition.PatternState ->
+                "{\"pattern_state\":${PatternStateQuerySchema.encode(value.query)}}"
             is Condition.Satisfied ->
                 "{\"satisfied\":{\"objective\":${StateReferenceSchema.encode(value.objective)}}}"
             is Condition.Counter ->
@@ -577,10 +590,12 @@ fun Condition.references(): Set<Pair<ReferenceKind, StateReference>> =
         is Condition.Or -> children.flatMap { it.references() }.toSet()
         is Condition.Not -> child.references()
         is Condition.Completed -> setOf(ReferenceKind.MECHANIC to mechanic)
+        is Condition.PatternState -> setOf(ReferenceKind.MECHANIC to query.mechanic)
         is Condition.Satisfied -> setOf(ReferenceKind.OBJECTIVE to objective)
         is Condition.Counter -> setOf(ReferenceKind.COUNTER to counter)
         is Condition.Timer -> setOf(ReferenceKind.TIMER to timer)
-        is Condition.Players,
+        is Condition.Players ->
+            satisfy.patternQueries().map { ReferenceKind.MECHANIC to it.mechanic }.toSet()
         is Condition.Count,
         is Condition.EventValue -> emptySet()
     }

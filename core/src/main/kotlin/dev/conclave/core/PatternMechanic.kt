@@ -108,14 +108,36 @@ class PatternInputConfiguration(
     }
 }
 
+/** Declared matcher capabilities for typed actions and validation; no resolved private answer. */
+class PatternInterface internal constructor(configuration: PatternConfiguration) {
+    val tokens: Set<String> = configuration.vocabulary
+    val possibleTokens: Set<String> =
+        java.util.Set.copyOf(
+            when (val answer = configuration.answer) {
+                is PatternAnswer.Fixed -> answer.tokens
+                is PatternAnswer.Shuffle -> answer.tokens
+                is PatternAnswer.Sample -> answer.tokens
+                is PatternAnswer.Choose -> answer.alternatives.flatten()
+            }
+        )
+    val perPlayer = configuration.perPlayer
+    val inputTokens: Set<String> = java.util.Set.copyOf(configuration.inputs.map { it.token })
+    val inputTargets: List<List<TargetReference>> =
+        java.util.List.copyOf(configuration.inputs.map { it.targets })
+}
+
 class PatternMechanic(private val config: PatternConfiguration, context: MechanicContext) :
     StatefulMechanic(context) {
+    private val bindings =
+        config.inputs.flatMap { input -> input.targets.map { it to input } }.toMap()
+
     private class Record(val answer: List<String>) {
         val submitted = mutableListOf<String>()
         var done = false
     }
 
     private val records = linkedMapOf<UUID?, Record>()
+    private var observation: PatternObservation? = null
     private val operations = mutableSetOf<UUID>()
 
     private data class Hold(
@@ -175,14 +197,51 @@ class PatternMechanic(private val config: PatternConfiguration, context: Mechani
     }
 
     override fun consumes(value: MechanicInput) =
-        value is MechanicInput.Press &&
-            config.inputs.any { value.target.reference in it.targets && it.consume }
+        value is MechanicInput.Press && bindings[value.target.reference]?.consume == true
+
+    override fun interactionHold(value: MechanicInput.Press) =
+        bindings[value.target.reference]?.hold ?: SimulationDuration(0)
+
+    override fun interactionProgress(player: UUID, gesture: UUID): InteractionProgress? =
+        holds[player]
+            ?.takeIf { it.press.gesture == gesture && state == MechanicState.RUNNING }
+            ?.let {
+                InteractionProgress(
+                    SimulationDuration((context.tick - it.began).coerceIn(0, it.input.hold.ticks)),
+                    it.input.hold,
+                )
+            }
+
+    override fun acceptsPress(value: MechanicInput.Press): Boolean {
+        val input = bindings[value.target.reference] ?: return false
+        return state == MechanicState.RUNNING &&
+            gestures[value.player] != value.gesture &&
+            physicalEligibility(input, value) &&
+            lastUse[value.player]?.let { context.tick - it < config.useCooldown.ticks } != true
+    }
+
+    override fun interactionPress(
+        player: UUID,
+        gesture: UUID,
+        targets: List<TargetHandle>,
+    ): MechanicInput.Press? {
+        if (state != MechanicState.RUNNING || !eligible(player, config.players)) return null
+        val candidates = targets.mapNotNull { target ->
+            bindings[target.reference]?.let { it to target }
+        }
+        check(candidates.map { it.first }.distinct().size <= 1) {
+            "Ambiguous physical pattern input"
+        }
+        return candidates
+            .asSequence()
+            .map { MechanicInput.Press(player, gesture, it.second) }
+            .firstOrNull(::acceptsPress)
+    }
 
     private fun press(value: MechanicInput.Press): Boolean {
         if (gestures[value.player] == value.gesture) return false
         holds.remove(value.player)
-        val input =
-            config.inputs.singleOrNull { value.target.reference in it.targets } ?: return false
+        val input = bindings[value.target.reference] ?: return false
         gestures[value.player] = value.gesture
         if (
             !physicalEligibility(input, value) ||
@@ -248,6 +307,7 @@ class PatternMechanic(private val config: PatternConfiguration, context: Mechani
                     record.answer.count { it == value.token }
         if (matches) record.submitted += value.token else record.submitted.clear()
         record.done = record.submitted.size == record.answer.size
+        observation = null
         val notices =
             mutableListOf<MechanicNotice>(
                 MechanicNotice.PatternInput(
@@ -267,6 +327,11 @@ class PatternMechanic(private val config: PatternConfiguration, context: Mechani
         val completed = records.values.count { it.done } >= config.completion.count(records.size)
         if (completed) {
             holds.clear()
+            observation = snapshot()
+            records.clear()
+            operations.clear()
+            gestures.clear()
+            lastUse.clear()
             finish(true, preceding = notices)
         } else notices.forEach(context::notice)
         return true
@@ -285,6 +350,7 @@ class PatternMechanic(private val config: PatternConfiguration, context: Mechani
             if (before > 0)
                 notices += MechanicNotice.PatternReset(player, before, record.answer.size)
         }
+        observation = null
         notices.forEach(context::notice)
         return true
     }
@@ -294,11 +360,26 @@ class PatternMechanic(private val config: PatternConfiguration, context: Mechani
         operations += operation
     }
 
-    fun progress(player: UUID? = null): Int? =
-        records[if (config.perPlayer) player else null]?.submitted?.size
+    override fun patternState(): PatternObservation? =
+        when (state) {
+            MechanicState.RUNNING -> observation ?: snapshot().also { observation = it }
+            MechanicState.SUCCEEDED -> observation
+            else -> null
+        }
 
-    fun completed(player: UUID? = null): Boolean =
-        records[if (config.perPlayer) player else null]?.done == true
+    private fun snapshot(): PatternObservation {
+        fun state(record: Record) =
+            PatternRecordState(record.submitted.size, record.answer.size, record.done)
+        return if (config.perPlayer)
+            PatternObservation(
+                records = records.mapKeys { checkNotNull(it.key) }.mapValues { state(it.value) }
+            )
+        else PatternObservation(shared = state(records.getValue(null)))
+    }
+
+    fun progress(player: UUID? = null): Int? = patternState()?.record(player)?.progress
+
+    fun completed(player: UUID? = null): Boolean = patternState()?.record(player)?.completed == true
 
     /**
      * Authorized presentation adapter only; never include this in public progress events or
@@ -310,6 +391,13 @@ class PatternMechanic(private val config: PatternConfiguration, context: Mechani
     override fun cancel() {
         super.cancel()
         holds.clear()
+        if (state == MechanicState.CANCELLED) {
+            records.clear()
+            observation = null
+            operations.clear()
+            gestures.clear()
+            lastUse.clear()
+        }
     }
 }
 

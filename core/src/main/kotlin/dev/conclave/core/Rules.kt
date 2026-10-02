@@ -1,5 +1,7 @@
 package dev.conclave.core
 
+import java.util.UUID
+
 enum class RuleSourceKind {
     SELF,
     MECHANIC,
@@ -36,6 +38,25 @@ sealed interface RuleAction {
     ) : RuleAction
 
     data class Timer(override val target: StateReference, val mutation: TimerMutation) : RuleAction
+
+    data class SubmitToken(
+        override val target: StateReference,
+        val token: String,
+        val player: PlayerOperand? = null,
+    ) : RuleAction
+
+    data class ResetPattern(
+        override val target: StateReference,
+        val player: PlayerOperand? = null,
+        val all: Boolean = false,
+    ) : RuleAction
+}
+
+data class PlayerOperand(val field: String) {
+    fun resolve(payload: EventPayload): UUID =
+        (payload.values.getValue(field) as EventDatum.Player).value
+
+    internal fun canonical(): String = "{\"event\":${jsonString(field)}}"
 }
 
 class RuleDefinition(
@@ -245,6 +266,8 @@ internal class RuleCompiler(
             }
         val result =
             when {
+                name == "submit_token" || name == "reset_pattern" ->
+                    patternAction(name, fields, event)
                 counter != null -> {
                     val reference = StateReferenceSchema.decode(fields.required("counter"), context)
                     if (
@@ -283,6 +306,81 @@ internal class RuleCompiler(
             }
         fields.finish()
         return result
+    }
+
+    private fun patternAction(name: String, fields: Fields, event: EventContract): RuleAction {
+        val targetNode = fields.required("mechanic")
+        val reference = StateReferenceSchema.decode(targetNode, context)
+        val pattern =
+            if (deferEncounter && reference.scope == StateScope.ENCOUNTER) null
+            else
+                owner(reference)
+                    .allMechanics
+                    .singleOrNull { it.id == reference.id }
+                    ?.mechanic
+                    ?.patternInterface
+                    ?: invalid(
+                        "pattern_target",
+                        "Action requires a directly accessible match_pattern occurrence",
+                        targetNode.source,
+                    )
+        val player =
+            fields.optional("player")?.let { value ->
+                val (kind, node) = singleField(value)
+                val field = node.text()
+                if (
+                    kind != "event" ||
+                        event.fields[field]?.let {
+                            it.kind == EventValueKind.PLAYER && it.required
+                        } != true
+                )
+                    invalid(
+                        "event_player",
+                        "Action player must be a required player event field; use on.player to select an optional event player",
+                        value.source,
+                    )
+                PlayerOperand(field)
+            }
+        if (name == "submit_token") {
+            val tokenNode = fields.required("token")
+            val token =
+                ConfigSchemas.identifier("Declared pattern token").decode(tokenNode, context)
+            if (pattern != null && token !in pattern.tokens)
+                invalid(
+                    "unknown_pattern_token",
+                    "Token '$token' is not declared by the target matcher",
+                    tokenNode.source,
+                )
+            if (pattern?.perPlayer == true && player == null)
+                invalid(
+                    "pattern_player",
+                    "Per-player submission requires player",
+                    fields.node.source,
+                )
+            return RuleAction.SubmitToken(reference, token, player)
+        }
+        val allNode = fields.optional("all")
+        val all =
+            allNode?.let {
+                ConfigSchemas.flag("Reset all unfinished captured records").decode(it, context)
+            } ?: false
+        if (allNode != null && !all || all && player != null)
+            invalid("pattern_player", "Use exactly one player or all: true", fields.node.source)
+        if (pattern != null) {
+            if (pattern.perPlayer && player == null && !all)
+                invalid(
+                    "pattern_player",
+                    "Per-player reset requires player or all: true",
+                    fields.node.source,
+                )
+            if (!pattern.perPlayer && (player != null || allNode != null))
+                invalid(
+                    "pattern_player",
+                    "Shared reset does not accept player or all",
+                    fields.node.source,
+                )
+        }
+        return RuleAction.ResetPattern(reference, player, all)
     }
 
     private fun integer(value: YamlValue, contract: EventContract): IntegerOperand {
@@ -350,6 +448,15 @@ internal fun RuleDefinition.canonical(): String {
                         "}}"
                 is RuleAction.Timer ->
                     "{${jsonString(action.mutation.name.lowercase() + "_timer")}: {\"timer\":${StateReferenceSchema.encode(action.target)}}}"
+                is RuleAction.SubmitToken ->
+                    "{\"submit_token\":{\"mechanic\":${StateReferenceSchema.encode(action.target)},\"token\":${jsonString(action.token)}" +
+                        (action.player?.let { ",\"player\":${it.canonical()}" } ?: "") +
+                        "}}"
+                is RuleAction.ResetPattern ->
+                    "{\"reset_pattern\":{\"mechanic\":${StateReferenceSchema.encode(action.target)}" +
+                        (action.player?.let { ",\"player\":${it.canonical()}" } ?: "") +
+                        (if (action.all) ",\"all\":true" else "") +
+                        "}}"
             }
         }
     return "{\"id\":${jsonString(id)},\"on\":{\"source\":$sourceJson,\"event\":${jsonString(event)}" +

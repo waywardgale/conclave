@@ -173,6 +173,8 @@ class CatalogCompiler(
                             .index(index),
                     )
         }
+        for (encounter in definitions.values) diagnostics +=
+            PatternValidation.routes(encounter, encounterOrigins.getValue(encounter.id))
         for (arena in arenas.values) for (pairing in arena.encounters.values) {
             val source = pairing.source
             val encounter = definitions[pairing.encounter]
@@ -204,6 +206,7 @@ class CatalogCompiler(
                         "Location '$logical' resolves to missing arena location '${pairing.location(logical)}'",
                         source,
                     )
+            diagnostics += PatternValidation.bindings(encounter, arena, pairing)
         }
         return if (diagnostics.isEmpty())
             Validation.Valid(

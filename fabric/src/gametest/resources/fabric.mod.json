@@ -15,6 +15,7 @@
       "dev.conclave.fabric.ProtectionNativeTest"
     ],
     "fabric-client-gametest": [
+      "dev.conclave.fabric.PatternClientTest",
       "dev.conclave.fabric.InteractionClientTest",
       "dev.conclave.fabric.EditorClientTest",
       "dev.conclave.fabric.GraveClientTest",
